@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kitchen Blitz</title>
+<style>
+  :root {
+    --bg: #F7F5F0;
+    --surface: #FFFFFF;
+    --border: #E2DDD6;
+    --text: #1A1A18;
+    --muted: #8A8780;
+    --green: #2D7A5F;
+    --green-light: #EAF4EF;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); padding-bottom: 3rem; }
+
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 1.25rem 0.85rem;
+    position: sticky; top: 0; z-index: 10;
+  }
+  .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.6rem; }
+  h1 { font-size: 18px; font-weight: 700; }
+
+  .legend { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 0.6rem; }
+  .tag { font-size: 11px; padding: 2px 9px; border-radius: 999px; font-weight: 500; }
+  .tag-sd { background: #FDF3E0; color: #C07010; }
+  .tag-st { background: #FAEEE5; color: #C0570A; }
+  .tag-orb { background: #E8EEFB; color: #2559A7; }
+
+  .progress-bar { height: 4px; background: var(--border); border-radius: 999px; overflow: hidden; margin-bottom: 4px; }
+  .progress-fill { height: 100%; background: var(--green); border-radius: 999px; width: 0%; transition: width 0.3s; }
+  #prog-label { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+  main { padding: 1rem; }
+  .hint { font-size: 12px; color: var(--muted); background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; margin-bottom: 1rem; }
+
+  .zone { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 0.75rem; overflow: hidden; }
+  .zone-title { font-size: 13px; font-weight: 600; padding: 0.7rem 1rem; display: flex; align-items: center; gap: 8px; }
+  .zone-title span { font-size: 15px; }
+  .skippable .zone-title::after { content: ' · optional'; font-size: 10px; font-weight: 400; color: var(--muted); margin-left: 2px; }
+
+  label {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 0.55rem 1rem;
+    border-top: 1px solid var(--border);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  label input[type=checkbox] { display: none; }
+  .box {
+    width: 20px; height: 20px; min-width: 20px; margin-top: 2px;
+    border-radius: 50%; border: 1.5px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: all 0.15s;
+    background: white;
+  }
+  label:has(input:checked) .box {
+    background: var(--green); border-color: var(--green);
+  }
+  label:has(input:checked) .box::after {
+    content: '';
+    display: block;
+    width: 10px; height: 8px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 8'%3E%3Cpath d='M1 3.5L3.5 6.5L9 1' stroke='white' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E");
+    background-size: contain; background-repeat: no-repeat;
+  }
+  label:has(input:checked) .task-text { text-decoration: line-through; opacity: 0.4; }
+  label:has(input:checked) { opacity: 0.5; }
+
+  .task-body { flex: 1; }
+  .task-text { font-size: 14px; line-height: 1.4; display: block; }
+  .tip { font-size: 11px; color: var(--muted); font-style: italic; margin-top: 2px; display: block; }
+  .task-tags { display: flex; gap: 5px; margin-top: 4px; flex-wrap: wrap; }
+
+  a.reset {
+    display: inline-block;
+    border: 1px solid #E8C5C5; color: #B54040;
+    border-radius: 8px; padding: 5px 12px;
+    font-size: 12px; text-decoration: none;
+    background: none;
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="header-top">
+    <h1>🍋 Kitchen blitz</h1>
+    <a class="reset" href="" onclick="location.reload();return false;">↺ Reset</a>
+  </div>
+  <div class="legend">
+    <span class="tag tag-sd">🟡 Scrub Daddy</span>
+    <span class="tag tag-st">💨 Steam</span>
+    <span class="tag tag-orb">🔵 Orbital</span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="prog"></div></div>
+  <div id="prog-label">0 of 0 done</div>
+</header>
+
+<main>
+<div class="hint">Tap a task to tick it off. Optional zones are marked.</div>
+
+<div class="zone">
+  <div class="zone-title"><span>📦</span> Setup</div>
+  <label><input type="checkbox" onchange="update()"><div class="box"></div><div class="task-body"><span class="task-text">Dishes away or stacked by sink</span></div></label>
+  <label><input type="checkbox" onchange="update()"><div class="box"></div><div class="task-body"><span class="task-text">Clear benchtops — move items to island</span></div></label>
+  <label><input type="checkbox" onchange="update()"><div class="box"></div><div class="task-body"><span class="task-text">Move bin out of the kitchen</span></div></label>
+</div>
+
+<div class="zone">
+  <div class="zone-title"><span>💨</span> Rangehood</div>
+  <label><input type="checkbox" onchange="update()"><div class="box"></div><div class="task-body"><span class="task-text">Spray & wipe rangehood underside & sides</span><div class="task-tags"><span class="tag tag-sd">🟡 Scrub Daddy</span></div></div></label>
+  <label><input type="checkbox" onchange="update()"><div class="box"></div><div class="task-body"><span class="task-text">Remove filters — soak in hot soapy water</span><span class="tip">Soak first so they're ready to scrub later</span></div></label>
+  <label><input type="checkbox" onchange="update()"><div class="box"></div><div class="task-body"><span class="task-text">Toothbrush around vent joins & edges</span></div></label>
+  <label><input type="checkbox" onchange="update()"><div class="box"></div><div class="task-body"><span class="task-text">Scrub soaked filters with Scrub Daddy, rinse & dry</span><div class="task-tags"><span class="tag tag-sd">🟡 Scrub Daddy</span></div></div></label>
+</div>
+
+<div class="zone">
+  <div class="zone-title"><span>🔥</span> Stovetop</div>
+  <label><input type="checkbox" onchange="update()"><div class="box"></div><div class="task-body"><span class="task-text">Lift grates — set left on right, spray surface back to front</span></div></label>
+  <label><input type="checkbox" onchange="update()"><div class="box"></div><div class="task-body"><span class="task-text">Scrub stove surface with Scrub Daddy</span><span class="tip">Tiny bit of baking soda on stubborn spots</span><div class="task-tags"><span class="tag tag-sd">🟡 Scrub Daddy</span></div></div></label>
+  <label><input type="checkbox" onchange="update()"><div class="box"></div><div class="task-body"><span class="task-text">Toothbrush around burner rings & edges</span></div></label>
+  <label><input type="checkbox" onchange="update()"><div class="box"></div><div class="task-body"><span class="task-text">Wipe & replace left grates, move right grates to counter, clean right side</span></div></label>
+  <label><input type="checkbox" onchange="update()"><div class="box"></div><div class="task-body"><span class="task-text">Steam any baked-on residue</span><div class="task-tags"><span class="tag tag-st">💨 Steam</span></div></div></label>
+  <label><input type="checkbox" onchange="update()"><div class="box"></div><div class="task-body"><span class="task-text">Wipe dry, replace all grates</span></div></label>
+</div>
+
+<div class="zone">
+  <div class="zone-title"><span>🪟</span> Glass splashback</div>
+  <label><input type="checkbox" onchange="update()"><div class="box"></div><div class="task-body"><span class="task-text">Spray glass cleaner top to bottom</span></div></label>
+  <label><input type="checkbox" onchange="update()"><div class="box"></div><div class="task-body"><span class="task-text">Wipe with Scrub Daddy soft side only</span><span class="tip">Glass — no abrasive side, no orbital</span><div class="task-tags"><span class="tag tag-sd">🟡 Scrub Daddy</span></div></div></label>
+  <label><input type="checkbox" onchange="update()"><div class="box"></div><div class="task-body"><span class="task-text">Steam any greasy residue near stovetop</span><div class="task-tags"><span class="tag tag-st">💨 Steam</span></div></div></label>
+  <label><input type="checkbox" onchange="update()"><div class="box"></div><div class="task-body"><span class="task-text">Buff dry with microfibre for streak-free finish</span></div></label>
+</div>
+
+<div class="zone">
+  <div class="zone-title"><span>🧹</span> Perimeter benchtops</div>
+  <label><input type="checkbox" onchange="update()"><div class="box"></div><div class="task-body"><span class="task-text">Work clockwise — move items forward, wipe behind, replace</span><span class="tip">Speed Cleaning: don't go back — one clean pass</span></div></label>
+  <label><input type="checkbox" onchange="update()"><div class="box"></div><div class="task-body"><span class="task-text">Scrub Daddy on any stuck-on food or stains</span><div class="task-tags"><span class="tag tag-sd">🟡 Scrub Daddy</span></div></div></label>
+  <label><input type="checkbox" onchange="update()"><div class="box"></div><div class="task-body"><span class="task-text">Toothbrush at wall joins & tap base</span></div></label>
+  <label><input type="checkbox" onchange="update()"><div class="box"></div><div class="task-body"><span class="task-text">Wipe cabinet fronts only where finger-marked</span><span class="tip">Vertical surfaces don't need a full clean every time</span></div></label>
+</div>
+
+<div class="zone">
+  <div class="zone-title"><span>🏝️</span> Island bench</div>
+  <label><input type="checkbox" onchange="update()"><div class="box"></div><div class="task-body"><span class="task-text">Clear & spray island top</span></div></label>
+  <label><input type="checkbox" onchange="update()"><div class="box"></div><div class="task-body"><span class="task-text">Scrub Daddy across full surface</span><div class="task-tags"><span class="tag tag-sd">🟡 Scrub Daddy</span></div></div></label>
+  <label><input type="checkbox" onchange="update()"><div class="box"></div><div class="task-body"><span class="task-text">Wipe sides & overhang</span></div></label>
+  <label><input type="checkbox" onchange="update()"><div class="box"></div><div class="task-body"><span class="task-text">Dry with microfibre</span></div></label>
+</div>
+
+<div class="zone skippable">
+  <div class="zone-title"><span>🧊</span> Fridge outside</div>
+  <label><input type="checkbox" onchange="update()"><div class="box"></div><div class="task-body"><span class="task-text">Wipe top (or feather dust if not dirty)</span></div></label>
+  <label><input type="checkbox" onchange="update()"><div class="box"></div><div class="task-body"><span class="task-text">Spray & wipe fingerprints on door</span></div></label>
+  <label><input type="checkbox" onchange="update()"><div class="box"></div><div class="task-body"><span class="task-text">Open door: toothbrush rubber gasket & air vent</span></div></label>
+  <label><input type="checkbox" onchange="update()"><div class="box"></div><div class="task-body"><span class="task-text">Wipe inside door edge & visible spills</span></div></label>
+</div>
+
+<div class="zone">
+  <div class="zone-title"><span>🚿</span> Sink</div>
+  <label><input type="checkbox" onchange="update()"><div class="box"></div><div class="task-body"><span class="task-text">Toothbrush around faucet base & sink-bench join</span></div></label>
+  <label><input type="checkbox" onchange="update()"><div class="box"></div><div class="task-body"><span class="task-text">Spray & wipe rim above bowl</span></div></label>
+  <label><input type="checkbox" onchange="update()"><div class="box"></div><div class="task-body"><span class="task-text">Wet bowl, sprinkle baking soda, scrub</span><span class="tip">Baking soda alone — don't mix with vinegar</span><div class="task-tags"><span class="tag tag-sd">🟡 Scrub Daddy</span></div></div></label>
+  <label><input type="checkbox" onchange="update()"><div class="box"></div><div class="task-body"><span class="task-text">Steam the tap & fittings</span><div class="task-tags"><span class="tag tag-st">💨 Steam</span></div></div></label>
+  <label><input type="checkbox" onchange="update()"><div class="box"></div><div class="task-body"><span class="task-text">Rinse bowl thoroughly, dry tap with microfibre</span></div></label>
+</div>
+
+<div class="zone skippable">
+  <div class="zone-title"><span>🔌</span> Small appliances</div>
+  <label><input type="checkbox" onchange="update()"><div class="box"></div><div class="task-body"><span class="task-text">Spray & wipe microwave inside & out</span></div></label>
+  <label><input type="checkbox" onchange="update()"><div class="box"></div><div class="task-body"><span class="task-text">Toothbrush kettle base & toaster crumb tray</span></div></label>
+  <label><input type="checkbox" onchange="update()"><div class="box"></div><div class="task-body"><span class="task-text">Wipe coffee machine exterior</span><span class="tip">Dust spice jars and move on — don't get distracted</span></div></label>
+</div>
+
+<div class="zone">
+  <div class="zone-title"><span>🧽</span> Floor</div>
+  <label><input type="checkbox" onchange="update()"><div class="box"></div><div class="task-body"><span class="task-text">Sweep or vacuum — far corner toward door</span><span class="tip">Always before wet cleaning</span></div></label>
+  <label><input type="checkbox" onchange="update()"><div class="box"></div><div class="task-body"><span class="task-text">Orbital scrubber on grout lines if applicable</span><div class="task-tags"><span class="tag tag-orb">🔵 Orbital</span></div></div></label>
+  <label><input type="checkbox" onchange="update()"><div class="box"></div><div class="task-body"><span class="task-text">Mop S-pattern from far corner toward exit</span><span class="tip">Mop your way out — don't walk on wet floor</span></div></label>
+  <label><input type="checkbox" onchange="update()"><div class="box"></div><div class="task-body"><span class="task-text">Scrub Daddy on stubborn spots as you go</span><div class="task-tags"><span class="tag tag-sd">🟡 Scrub Daddy</span></div></div></label>
+  <label><input type="checkbox" onchange="update()"><div class="box"></div><div class="task-body"><span class="task-text">Mop exit — done</span></div></label>
+</div>
+
+</main>
+
+<script>
+function update() {
+  const all = document.querySelectorAll('input[type=checkbox]');
+  const done = [...all].filter(c => c.checked).length;
+  const pct = all.length ? Math.round(done / all.length * 100) : 0;
+  document.getElementById('prog').style.width = pct + '%';
+  document.getElementById('prog-label').textContent = done + ' of ' + all.length + ' done — ' + pct + '%';
+}
+update();
+</script>
+</body>
+</html>

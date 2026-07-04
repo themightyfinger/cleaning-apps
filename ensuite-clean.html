@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ensuite Blitz</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap');
+
+  :root {
+    --bg: #F4F6F7;
+    --surface: #FFFFFF;
+    --border: #DDE2E5;
+    --text: #18191A;
+    --muted: #888C90;
+    --green: #1D7A5F;
+    --green-light: #E8F4EF;
+    --scrubber: #185FA5;
+    --scrubber-light: #E6F1FB;
+    --hose: #0F6E56;
+    --hose-light: #E1F5EE;
+    --steam: #854F0B;
+    --steam-light: #FAEEDA;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding-bottom: 2rem;
+  }
+
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 1.25rem 0.75rem;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+  }
+
+  h1 { font-size: 17px; font-weight: 600; letter-spacing: -0.3px; }
+
+  .reset-btn {
+    background: none;
+    border: 1px solid #E8C5C5;
+    color: #B54040;
+    border-radius: var(--radius-sm);
+    padding: 5px 12px;
+    font-size: 12px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+  }
+
+  .legend {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 0.75rem;
+  }
+
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .tag-s { background: var(--scrubber-light); color: var(--scrubber); }
+  .tag-h { background: var(--hose-light); color: var(--hose); }
+  .tag-st { background: var(--steam-light); color: var(--steam); }
+
+  .progress-wrap { }
+  .progress-bar {
+    height: 4px;
+    background: var(--border);
+    border-radius: 999px;
+    overflow: hidden;
+    margin-bottom: 4px;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--green);
+    border-radius: 999px;
+    transition: width 0.3s ease;
+    width: 0%;
+  }
+  .progress-label {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+  }
+
+  main { padding: 1rem; }
+
+  .zone {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 0.75rem;
+    overflow: hidden;
+  }
+
+  .zone-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0.7rem 1rem;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .zone-icon { font-size: 15px; width: 22px; text-align: center; flex-shrink: 0; }
+  .zone-name { font-size: 13px; font-weight: 600; }
+  .zone-badge { margin-left: auto; font-size: 11px; font-family: 'DM Mono', monospace; color: var(--muted); flex-shrink: 0; }
+  .zone-chevron { font-size: 12px; color: var(--muted); transition: transform 0.2s; flex-shrink: 0; }
+  .zone-chevron.closed { transform: rotate(-90deg); }
+
+  .zone-tasks { }
+  .zone-tasks.hidden { display: none; }
+
+  .task {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 0.55rem 1rem;
+    border-top: 1px solid var(--border);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.1s;
+  }
+
+  .task:active { background: var(--bg); }
+  .task.done { opacity: 0.35; }
+  .task.done .task-text { text-decoration: line-through; }
+
+  .cb {
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
+    margin-top: 2px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+
+  .task.done .cb { background: var(--green); border-color: var(--green); }
+  .tick { display: none; }
+  .task.done .tick { display: block; }
+
+  .task-body { flex: 1; min-width: 0; }
+  .task-text { font-size: 14px; line-height: 1.4; display: block; }
+  .task-tip { font-size: 11px; color: var(--muted); display: block; margin-top: 2px; font-style: italic; }
+
+  .task-tags { display: flex; gap: 5px; margin-top: 4px; flex-wrap: wrap; }
+
+  .complete-banner {
+    display: none;
+    background: var(--green-light);
+    border: 1px solid #B5DCC9;
+    border-radius: var(--radius);
+    padding: 1rem;
+    text-align: center;
+    margin-bottom: 1rem;
+  }
+  .complete-banner p { font-weight: 600; color: var(--green); font-size: 15px; }
+  .complete-banner small { color: #5A9E82; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <h1>🚿 Ensuite blitz</h1>
+    <button class="reset-btn" onclick="resetAll()">↺ Reset</button>
+  </div>
+  <div class="legend">
+    <span class="tag tag-s">🔵 Scrubber</span>
+    <span class="tag tag-h">🟢 Pope hose</span>
+    <span class="tag tag-st">🟠 Steam</span>
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-bar"><div class="progress-fill" id="pf"></div></div>
+    <div class="progress-label" id="pl">0 of 0 done</div>
+  </div>
+</header>
+
+<main>
+  <div class="complete-banner" id="cb"><p>Ensuite done.</p></div>
+  <div id="zones"></div>
+</main>
+
+<script>
+const zones = [
+  {
+    name: "Setup", icon: "📦",
+    tasks: [
+      { t: "Loose items off tub & surfaces onto cloth" },
+      { t: "Attach Pope hose to tap, test spray", tags: ["h"] },
+      { t: "Apply tile cleaner to tub tiles — let dwell", tip: "Let chemistry do the work while you prep" }
+    ]
+  },
+  {
+    name: "Tub tiles", icon: "🟦",
+    tasks: [
+      { t: "Wet tub surround tiles with hose", tags: ["h"] },
+      { t: "Scrub tiles top to bottom", tags: ["s"] },
+      { t: "Toothbrush grout lines & tile-meets-tub join" }
+    ]
+  },
+  {
+    name: "Tub", icon: "🛁",
+    tasks: [
+      { t: "Wet tub with hose", tags: ["h"] },
+      { t: "Sprinkle cleanser, scrub far end toward drain", tags: ["s"] },
+      { t: "Hose rinse tub & tiles, far end first", tags: ["h"] },
+      { t: "Dry chrome with cloth" }
+    ]
+  },
+  {
+    name: "Basin", icon: "🚰",
+    tasks: [
+      { t: "Scrub inside basin", tags: ["s"] },
+      { t: "Rinse basin" },
+      { t: "Spray & wipe tap, rim & basin front" },
+      { t: "Shine tap dry with microfibre" }
+    ]
+  },
+  {
+    name: "Soap dish & benchtop", icon: "🧼",
+    tasks: [
+      { t: "Toothbrush soap dish, rinse" },
+      { t: "Spray & wipe stone benchtop", tip: "pH-neutral cleaner only on stone — no vinegar" },
+      { t: "Spray & scrub vanity panel tiles", tags: ["s"] },
+      { t: "Rinse tiles, wipe dry" }
+    ]
+  },
+  {
+    name: "Toilet", icon: "🚽",
+    tasks: [
+      { t: "Sprinkle Domestos in bowl, brush, flush" },
+      { t: "Spray & wipe flush plate & cistern panel top" },
+      { t: "Lids up — spray under seat → lower → spray seat top" },
+      { t: "Spray under lid → lower → spray lid top & hinges" },
+      { t: "Wipe in reverse order" },
+      { t: "Spray & scrub floor around base", tags: ["s"] }
+    ]
+  },
+  {
+    name: "Shower glass — outside", icon: "🪟",
+    tasks: [
+      { t: "Spray glass cleaner on outside of frameless screen" },
+      { t: "Scrub with scrubber (soft head)", tags: ["s"], tip: "No abrasive pads — scratches frameless glass" },
+      { t: "Hose rinse outside of glass", tags: ["h"] },
+      { t: "Squeegee top to bottom", tip: "60 sec — prevents hard water etching between cleans" }
+    ]
+  },
+  {
+    name: "Shower nook", icon: "🚿",
+    tasks: [
+      { t: "Wet walls with hose, far wall first", tags: ["h"] },
+      { t: "Apply tile cleaner, let dwell 2 min" },
+      { t: "Scrub walls top to bottom", tags: ["s"] },
+      { t: "Steam grout lines — 3–5 sec per section", tags: ["st"], tip: "Follow steam immediately with toothbrush while grout is loose" },
+      { t: "Toothbrush stubborn grout & nook corners" },
+      { t: "Hose rinse walls top to bottom", tags: ["h"] },
+      { t: "Scrub shower floor", tags: ["s"] },
+      { t: "Hose rinse floor toward drain", tags: ["h"] }
+    ]
+  },
+  {
+    name: "Floor", icon: "🧹",
+    tasks: [
+      { t: "Squeeze Domestos across floor tiles" },
+      { t: "Scrub floor, far corner toward drain", tags: ["s"], tip: "Scrubbing beats mopping for grout — reaches into the surface" },
+      { t: "Squeegee dirty water to drain" },
+      { t: "Mop dry with microfibre" }
+    ]
+  },
+  {
+    name: "Steam finish", icon: "✨",
+    tasks: [
+      { t: "Steam taps & all chrome", tags: ["st"] },
+      { t: "Dry chrome with microfibre" },
+      { t: "Steam mirror cabinet doors, wipe dry", tags: ["st"] },
+      { t: "Steam shower glass inside, squeegee dry", tags: ["st"], tip: "Squeegee after every session — stops soap scum buildup" }
+    ]
+  },
+  {
+    name: "Done", icon: "🌿",
+    tasks: [
+      { t: "Replace all items" }
+    ]
+  }
+];
+
+let state = [];
+
+function tagHtml(tags) {
+  if (!tags || !tags.length) return '';
+  const map = {
+    s: ['tag-s', '🔵 Scrubber'],
+    h: ['tag-h', '🟢 Hose'],
+    st: ['tag-st', '🟠 Steam']
+  };
+  return '<div class="task-tags">' + tags.map(t => `<span class="tag ${map[t][0]}">${map[t][1]}</span>`).join('') + '</div>';
+}
+
+function buildUI() {
+  state = zones.map(z => ({ done: Array(z.tasks.length).fill(false), open: true }));
+  const container = document.getElementById('zones');
+  container.innerHTML = '';
+
+  zones.forEach((zone, zi) => {
+    const div = document.createElement('div');
+    div.className = 'zone';
+
+    const hdr = document.createElement('div');
+    hdr.className = 'zone-header';
+    hdr.innerHTML = `<span class="zone-icon">${zone.icon}</span><span class="zone-name">${zone.name}</span><span class="zone-badge" id="zb-${zi}"></span><span class="zone-chevron" id="zchev-${zi}">▾</span>`;
+    hdr.addEventListener('click', () => toggleZone(zi));
+    div.appendChild(hdr);
+
+    const tasksWrap = document.createElement('div');
+    tasksWrap.className = 'zone-tasks';
+    tasksWrap.id = 'zt-' + zi;
+
+    zone.tasks.forEach((task, ti) => {
+      const row = document.createElement('div');
+      row.className = 'task';
+      row.id = `t-${zi}-${ti}`;
+      const tip = task.tip ? `<span class="task-tip">${task.tip}</span>` : '';
+      row.innerHTML = `
+        <div class="cb">
+          <svg class="tick" width="10" height="8" viewBox="0 0 10 8" fill="none">
+            <path d="M1 3.5L3.5 6.5L9 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="task-body">
+          <span class="task-text">${task.t}</span>
+          ${tip}
+          ${tagHtml(task.tags)}
+        </div>`;
+      row.addEventListener('click', () => toggle(zi, ti));
+      tasksWrap.appendChild(row);
+    });
+
+    div.appendChild(tasksWrap);
+    container.appendChild(div);
+    updateBadge(zi);
+  });
+
+  updateProgress();
+}
+
+function toggle(zi, ti) {
+  state[zi].done[ti] = !state[zi].done[ti];
+  document.getElementById(`t-${zi}-${ti}`).classList.toggle('done', state[zi].done[ti]);
+  updateBadge(zi);
+  updateProgress();
+}
+
+function toggleZone(zi) {
+  state[zi].open = !state[zi].open;
+  document.getElementById('zt-' + zi).classList.toggle('hidden', !state[zi].open);
+  document.getElementById('zchev-' + zi).classList.toggle('closed', !state[zi].open);
+}
+
+function updateBadge(zi) {
+  const d = state[zi].done.filter(Boolean).length;
+  document.getElementById('zb-' + zi).textContent = `${d}/${zones[zi].tasks.length}`;
+}
+
+function updateProgress() {
+  const total = zones.reduce((a, z) => a + z.tasks.length, 0);
+  const done = state.reduce((a, s) => a + s.done.filter(Boolean).length, 0);
+  const pct = total ? Math.round(done / total * 100) : 0;
+  document.getElementById('pf').style.width = pct + '%';
+  document.getElementById('pl').textContent = `${done} of ${total} done — ${pct}%`;
+  document.getElementById('cb').style.display = (done === total && total > 0) ? 'block' : 'none';
+}
+
+function resetAll() { buildUI(); }
+buildUI();
+</script>
+</body>
+</html>
